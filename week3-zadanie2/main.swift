@@ -57,7 +57,7 @@ struct Person: Age {
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "dd.MM.yyyy"
                 dateFormatter.timeZone = TimeZone.current
-                dateFormatter.locale = Locale.current
+                dateFormatter.locale = Locale(identifier: "ru_RU")
                 let currentDate = Date() // текущая дата
                 // отформатированния текущая дата в формате dd.MM.yyyy
                 let currentDateString = dateFormatter.string(from: currentDate)
@@ -86,20 +86,20 @@ extension Person: Comparable {
         return lhs.birthday < rhs.birthday
     }
     
-    static func <= (lhs: Person, rhs: Person) -> Bool {
-        return lhs.birthday <= rhs.birthday
-    }
+    //static func <= (lhs: Person, rhs: Person) -> Bool {
+    //    return lhs.birthday <= rhs.birthday
+    //}
     
-    static func >= (lhs: Person, rhs: Person) -> Bool {
-        return lhs.birthday >= rhs.birthday
-    }
+    //static func >= (lhs: Person, rhs: Person) -> Bool {
+    //    return lhs.birthday >= rhs.birthday
+    //}
     
     static func > (lhs: Person, rhs: Person) -> Bool {
         return lhs.birthday > rhs.birthday
     }
 }
 
-// для проверки на одинаковые (не уникальные) Person сделаем, чтобы тип Person удовлетворял протоколу Equatable
+// для проверки на одинаковые (уже созданные) Person сделаем, чтобы тип Person удовлетворял протоколу Equatable
 extension Person: Equatable {
     static func == (lhs: Person, rhs: Person) -> Bool {
         return lhs.name == rhs.name &&
@@ -111,12 +111,18 @@ extension Person: Equatable {
 
 // Для Dictionary написать extension с методом, который в качестве параметра будет принимать Person и добавлять в словарь по ключу person.birthday значение person.name
 extension Dictionary {
-    
+    func addNewPerson(addNew person: Person, toDictionary sourceDict: Dictionary<Date, String>) -> Dictionary<Date, String> {
+        var newDictionary = sourceDict
+        newDictionary.updateValue(person.name, forKey: person.birthday)
+        //newDictionary[person.birthday] = person.name
+        return newDictionary
+    }
 }
 
 let vova = try Person(name: "Вова", birthdayString: "20.01.1990", age: 30, gender: .male)
 let nadya = try Person(name: "Надя", birthdayString: "10.10.1993", age: 26, gender: .female)
-let vova2 = try Person(name: "Вова", birthdayString: "21.01.1990", age: 30, gender: .male)
+let vova2 = try Person(name: "Вова", birthdayString: "20.01.1990", age: 30, gender: .male)
+let julia = try Person(name: "Юля", birthdayString: "12.05.1990", age: 30, gender: .female)
 
 print(vova.birthday) // 1990-01-20 21:00:00 +0000
 print(nadya.birthday) // 1993-10-09 20:00:00 +0000
@@ -127,7 +133,9 @@ func printWhoIsOlder(first: Person, second: Person) {
         print ("Person \(first.name) старше, чем \(second.name)")
     } else if first > second {
         print("Person \(first.name) младше, чем \(second.name)")
-    } else if first >= second {
+    }
+    // проверка что first и second родились в один год
+    if first.age == second.age {
         print("Данные люди \(first.name) и \(second.name) родились в один и тот же год")
     }
 }
@@ -138,4 +146,22 @@ if vova == vova2 {
     print("Такой человек \(vova.name) уже создан и занесен в систему!") // так как vova и vova2 идентичны, то проверка на equatable вернет True - Такой персонаж уже создан!
 }
 
-printWhoIsOlder(first: vova, second: vova2) // Данные люди Вова и Вова родились в один и тот же год
+printWhoIsOlder(first: vova, second: julia) // Данные люди Вова и Юля родились в один и тот же год
+
+// словарь персон
+var personDict: Dictionary<Date, String> = [vova.birthday: vova.name, nadya.birthday: nadya.name]
+
+if personDict[vova.birthday] != nil {
+    print(personDict[vova.birthday]!) // Вова
+}
+// новый массив с добавленным персоной julia
+let newDict = personDict.addNewPerson(addNew: julia, toDictionary: personDict) // добавим Юлю
+
+let dictCount = newDict.count // размер нового словаря
+
+print("Содержимое словаря:")
+print("Размер словаря: \(dictCount) элементов")
+print(newDict)
+// Содержимое словаря:
+// [1990-01-19 21:00:00 +0000: "Вова", 1993-10-09 20:00:00 +0000: "Надя", 1990-05-11 20:00:00 +0000: "Юля"]
+// таким образом Юля добавилась в словарь
