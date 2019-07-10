@@ -30,7 +30,7 @@ protocol Age {
 struct Person: Age {
     let name: String
     let birthdayString: String
-    let age: Int
+    var age: Int = 0
     var birthday: Date
     let gender: Gender
     
@@ -44,39 +44,79 @@ struct Person: Age {
     enum Errors: Error {
         case birthdayDateIncorrect
     }
+    
+    func getPersonAge(birthdate: Date) -> Int {
+        
+        let calendar = Calendar.current
+        let birthCalendarComponents = calendar.dateComponents([.year, .month, .day], from: birthdate)
+        let birthYear = birthCalendarComponents.year
+        let currentDate = Date()
+        let currentCalendarComponents = calendar.dateComponents([.year, .month, .day], from: currentDate)
+        let currentYear = currentCalendarComponents.year
+        let raznicaDateInterval = DateInterval(start: birthdate, end: currentDate)
+        print("разница возрастов \(raznicaDateInterval)")
+        return currentYear! - birthYear!
+    }
+    
     // инициализатор
-    init(name: String, birthdayString: String, age: Int, gender: Gender) throws {
+    init(name: String, birthdayString: String, gender: Gender) throws {
         do {
             self.name = name
             self.birthdayString = birthdayString
             self.gender = gender
             
             // строку в дату
-            func getDate(date: String) throws -> (Date?) {
+            func getDate(date: String) -> (Date?) {
                 
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "dd.MM.yyyy"
                 dateFormatter.timeZone = TimeZone.current
                 dateFormatter.locale = Locale.current
-                let currentDate = Date() // текущая дата
+                
+                //let currentDate = Date() // текущая дата
+                
                 // отформатированния текущая дата в формате dd.MM.yyyy
-                let currentDateString = dateFormatter.string(from: currentDate)
-                guard date < currentDateString else {
-                    throw Errors.birthdayDateIncorrect
-                }
+                //let currentDateString = dateFormatter.string(from: currentDate)
+                //guard date < currentDateString else {
+                //    throw Errors.birthdayDateIncorrect
+                //}
                 //print("Current Date: \(currentDateString)")
                 return dateFormatter.date(from: date) // возвращаем тип Date
             }
             
-            self.age = age
+            func checkBirthDate(birthdayDate: Date) throws {
+                guard birthdayDate < Date() else {
+                    throw Errors.birthdayDateIncorrect
+                }
+            }
+            
+            try checkBirthDate(birthdayDate: getDate(date: birthdayString)!)
+            
+            func getPersonAge(birthdate: Date) -> Int {
+                
+                let calendar = Calendar.current
+                let birthCalendarComponents = calendar.dateComponents([.year, .month, .day], from: birthdate)
+                let birthYear = birthCalendarComponents.year
+                let currentDate = Date()
+                let currentCalendarComponents = calendar.dateComponents([.year, .month, .day], from: currentDate)
+                let currentYear = currentCalendarComponents.year
+                let raznicaDateInterval = DateInterval(start: birthdate, end: currentDate)
+                print("разница возрастов \(raznicaDateInterval)")
+                return currentYear! - birthYear!
+            }
+            
+            self.age = getPersonAge(birthdate: getDate(date: birthdayString)!)
             // пробуем запасать в birthday дату рождения из строки birtdayString
-            self.birthday = try getDate(date: birthdayString) ?? Date()
+            
+            self.birthday = getDate(date: birthdayString) ?? Date()
             // и если срабатывает исключение что дата рождения больше текущей даты - то пробросить ошибку Errors.birthdayDateIncorrect
-        } catch Errors.birthdayDateIncorrect {
-            self.birthday = Date() // тогда по дефолту сделаем что он родился сегодня ))
-            print("Дата рождения клиента по имени \(name), больше текущей даты \(self.birthday)")
-            // Дата рождения клиента по имени Вова, больше текущей даты 2019-06-24 18:40:36 +0000
         }
+        //catch Errors.birthdayDateIncorrect {
+        //    self.birthday = Date() // тогда по дефолту сделаем что он родился сегодня ))
+        //    print("Дата рождения клиента по имени \(name), больше текущей даты \(self.birthday)")
+            // Дата рождения клиента по имени Вова, больше текущей даты 2019-06-24 18:40:36 +0000
+        //}
+        //self.age = getPersonAge(birthdate: try getDate(date: birthdayString)!)
     }
 }
 
@@ -86,13 +126,13 @@ extension Person: Comparable {
         return lhs.birthday < rhs.birthday
     }
     
-    static func <= (lhs: Person, rhs: Person) -> Bool {
-        return lhs.birthday <= rhs.birthday
-    }
+    //static func <= (lhs: Person, rhs: Person) -> Bool {
+    //    return lhs.birthday <= rhs.birthday
+    //}
     
-    static func >= (lhs: Person, rhs: Person) -> Bool {
-        return lhs.birthday >= rhs.birthday
-    }
+    //static func >= (lhs: Person, rhs: Person) -> Bool {
+    //    return lhs.birthday >= rhs.birthday
+    //}
     
     static func > (lhs: Person, rhs: Person) -> Bool {
         return lhs.birthday > rhs.birthday
@@ -114,12 +154,14 @@ extension Dictionary {
     
 }
 
-let vova = try Person(name: "Вова", birthdayString: "20.01.1990", age: 30, gender: .male)
-let nadya = try Person(name: "Надя", birthdayString: "10.10.1993", age: 26, gender: .female)
-let vova2 = try Person(name: "Вова", birthdayString: "21.01.1990", age: 30, gender: .male)
+let vova = try Person(name: "Вова", birthdayString: "20.01.1990", gender: .male)
+let nadya = try Person(name: "Надя", birthdayString: "10.10.1993", gender: .female)
+let vova2 = try Person(name: "Вова", birthdayString: "20.01.1990", gender: .male)
 
 print(vova.birthday) // 1990-01-20 21:00:00 +0000
+print("Возраст персоны \(vova.name) равен \(vova.age)")
 print(nadya.birthday) // 1993-10-09 20:00:00 +0000
+print("Возраст персоны \(nadya.name) равен \(nadya.age)")
 
 // функция проверяющая кто из двух персон старше
 func printWhoIsOlder(first: Person, second: Person) {
